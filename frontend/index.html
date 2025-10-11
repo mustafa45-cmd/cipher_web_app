@@ -1,0 +1,47 @@
+<!doctype html>
+<html lang="tr">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Cipher Web Client</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <div class="container">
+    <h1>Cipher Web Client</h1>
+    <div class="card">
+      <label for="cipher">Şifreleme Türü</label>
+      <select id="cipher">
+        <option value="caesar">Caesar</option>
+        <option value="affine">Affine</option>
+        <option value="vigenere">Vigenère</option>
+        <option value="substitution">Substitution</option>
+        <option value="railfence">Rail Fence</option>
+      </select>
+
+      <div id="params">
+        <!-- dynamic params go here -->
+      </div>
+
+      <label for="inputText">Metin</label>
+      <textarea id="inputText" rows="4"></textarea>
+
+      <div class="buttons">
+        <button id="encryptBtn">Şifrele & Gönder</button>
+        <button id="decryptBtn">Çöz</button>
+      </div>
+    </div>
+
+    <div class="card">
+      <h3>Sonuç</h3>
+      <label for="result">Çıktı</label>
+      <textarea id="result" rows="6" readonly></textarea>
+    </div>
+
+    <div class="note">
+      <p>Not: Backend: <code>client_api.py</code> (HTTP API) ve <code>server.py</code> (TCP server). Önce TCP server'i başlatın, sonra client API'yi çalıştırın.</p>
+    </div>
+  </div>
+  <script src="script.js"></script>
+</body>
+</html>

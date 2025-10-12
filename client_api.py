@@ -1,14 +1,16 @@
-from flask import Flask, request, jsonify
+# client_api.py
+from flask import Flask, request, jsonify, send_from_directory, Response
 from flask_cors import CORS
-import socket, json, string
+import socket, json, string, threading, queue
 from math import gcd
+import time
 
-app = Flask(__name__)
+app = Flask(__name__, static_folder='frontend', static_url_path='')
 CORS(app)
 
 ALPHABET = string.ascii_uppercase
 
-# Encryption functions (client-side)
+# --- (şifreleme/deşifreleme fonksiyonları aynı) ---
 def caesar_encrypt(text, shift):
     def map_char(c):
         if c.isalpha():
@@ -143,6 +145,7 @@ def railfence_decrypt(cipher, rails):
         pointers[r] += 1
     return ''.join(res)
 
+# --- TCP forward ---
 TCP_HOST = '127.0.0.1'
 TCP_PORT = 65432
 
@@ -155,13 +158,49 @@ def forward_to_tcp_server(payload):
     except Exception as e:
         return False, str(e)
 
+# --- Simple pub/sub for notifying decrypt-tab clients (SSE) ---
+subscribers = []
+sub_lock = threading.Lock()
+
+def publish_message(msg):
+    # push msg to all subscriber queues
+    with sub_lock:
+        for q in subscribers[:]:
+            try:
+                q.put(msg, block=False)
+            except Exception:
+                pass
+
+@app.route('/stream')
+def stream():
+    def gen(q):
+        try:
+            while True:
+                msg = q.get()  # blocking
+                yield f"data: {json.dumps({'ciphertext': msg})}\n\n"
+        except GeneratorExit:
+            pass
+
+    q = queue.Queue()
+    with sub_lock:
+        subscribers.append(q)
+    return Response(gen(q), mimetype='text/event-stream')
+
+@app.route('/publish', methods=['POST'])
+def publish():
+    j = request.get_json() or {}
+    ct = j.get('ciphertext','')
+    publish_message(ct)
+    return jsonify({'status':'ok'})
+
+# --- Main process endpoint (encrypt/decrypt) ---
 @app.route('/process', methods=['POST'])
 def process():
     data = request.json or {}
-    action = data.get('action')  # 'encrypt' or 'decrypt' (frontend uses encrypt/decrypt)
+    action = data.get('action')
     cipher = data.get('cipher')
     params = data.get('params') or {}
-    text = data.get('text', '')
+    text = data.get('text','')
 
     try:
         if action == 'encrypt':
@@ -172,14 +211,21 @@ def process():
             elif cipher == 'vigenere':
                 result = vigenere_encrypt(text, params.get('key',''))
             elif cipher == 'substitution':
-                result = substitution_encrypt(text, params.get('key','')) 
+                result = substitution_encrypt(text, params.get('key',''))
             elif cipher == 'railfence':
                 result = railfence_encrypt(text, int(params.get('rails',2)))
             else:
                 return jsonify({'error':'unknown cipher'}), 400
+
+            # forward to TCP server for logging
             payload = {'cipher': cipher, 'params': params, 'ciphertext': result}
             ok, err = forward_to_tcp_server(payload)
+
+            # publish ciphertext to subscribers (decrypt tab)
+            publish_message(result)
+
             return jsonify({'status':'ok','action':'encrypt','result':result,'forwarded':ok,'error':err})
+
         elif action == 'decrypt':
             if cipher == 'caesar':
                 result = caesar_decrypt(text, int(params.get('shift',0)))
@@ -188,19 +234,31 @@ def process():
             elif cipher == 'vigenere':
                 result = vigenere_decrypt(text, params.get('key',''))
             elif cipher == 'substitution':
-                result = substitution_decrypt(text, params.get('key','')) 
+                result = substitution_decrypt(text, params.get('key',''))
             elif cipher == 'railfence':
                 result = railfence_decrypt(text, int(params.get('rails',2)))
             else:
                 return jsonify({'error':'unknown cipher'}), 400
-            # forward decrypted attempt to TCP server for logging (we forward the original ciphertext and params)
+
+            # forward decrypted attempt to TCP server for logging
             payload = {'cipher': cipher, 'params': params, 'ciphertext': text}
             ok, err = forward_to_tcp_server(payload)
+
             return jsonify({'status':'ok','action':'decrypt','result':result,'forwarded':ok,'error':err})
         else:
             return jsonify({'error':'unknown action'}), 400
     except Exception as e:
         return jsonify({'error': str(e)}), 400
 
+# serve frontend files
+@app.route('/')
+def index():
+    return send_from_directory('frontend','index.html')
+
+@app.route('/<path:p>')
+def static_proxy(p):
+    return send_from_directory('frontend', p)
+
 if __name__ == '__main__':
-    app.run(host='0.0.0.0', port=5000, debug=True)
+    print("Flask API + SSE server running at http://127.0.0.1:5000")
+    app.run(host='0.0.0.0', port=5000, debug=True, threaded=True)

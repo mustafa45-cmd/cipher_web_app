@@ -9,7 +9,15 @@
 <body>
   <div class="container">
     <h1>Cipher Web Client</h1>
+
+    <div class="links">
+      <a id="openEncrypt" href="?mode=encrypt" target="_self">Şifreleme Sekmesini Aç</a> |
+      <a id="openDecrypt" href="?mode=decrypt" target="_self">Çözme Sekmesini Aç</a>
+    </div>
+
     <div class="card">
+      <label>Mod: <span id="modeLabel"></span></label>
+
       <label for="cipher">Şifreleme Türü</label>
       <select id="cipher">
         <option value="caesar">Caesar</option>
@@ -19,9 +27,7 @@
         <option value="railfence">Rail Fence</option>
       </select>
 
-      <div id="params">
-        <!-- dynamic params go here -->
-      </div>
+      <div id="params"></div>
 
       <label for="inputText">Metin</label>
       <textarea id="inputText" rows="4"></textarea>
@@ -34,14 +40,14 @@
 
     <div class="card">
       <h3>Sonuç</h3>
-      <label for="result">Çıktı</label>
-      <textarea id="result" rows="6" readonly></textarea>
+      <textarea id="result" rows="3" readonly></textarea>
     </div>
 
     <div class="note">
-      <p>Not: Backend: <code>client_api.py</code> (HTTP API) ve <code>server.py</code> (TCP server). Önce TCP server'i başlatın, sonra client API'yi çalıştırın.</p>
+      <p>Not: Bu sayfayı iki kez aç: biri <strong>?mode=encrypt</strong>, diğeri <strong>?mode=decrypt</strong>. Şifreleme sekmesi yeni ciphertext oluşturunca otomatik olarak çözme sekmesine iletilir.</p>
     </div>
   </div>
+
   <script src="script.js"></script>
 </body>
 </html>

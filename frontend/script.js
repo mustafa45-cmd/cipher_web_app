@@ -4,6 +4,21 @@ const inputText = document.getElementById('inputText');
 const resultArea = document.getElementById('result');
 const encryptBtn = document.getElementById('encryptBtn');
 const decryptBtn = document.getElementById('decryptBtn');
+const modeLabel = document.getElementById('modeLabel');
+
+function getMode(){
+  return new URLSearchParams(window.location.search).get('mode') || 'encrypt';
+}
+
+const mode = getMode();
+modeLabel.innerText = mode === 'decrypt' ? 'Çözme' : 'Şifreleme';
+
+// UI: bazı butonları gizle/aktif et
+if(mode === 'encrypt'){
+  decryptBtn.style.display = 'none';
+} else {
+  encryptBtn.style.display = 'none';
+}
 
 function renderParams(){
   const c = cipherSelect.value;
@@ -37,21 +52,50 @@ async function send(action){
   } else if(cipher === 'railfence'){
     params.rails = document.getElementById('p_rails').value;
   }
+
   const text = inputText.value;
   const payload = { action, cipher, params, text };
-  try{
+
+  try {
     const res = await fetch('http://127.0.0.1:5000/process', {
-      method:'POST',
-      headers:{'Content-Type':'application/json'},
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(payload)
     });
+
     const data = await res.json();
-    if(data.error) resultArea.value = 'Error: ' + data.error;
-    else resultArea.value = JSON.stringify(data, null, 2);
-  }catch(e){
-    resultArea.value = 'Fetch error: ' + e.message;
+
+    if (data.error) {
+      resultArea.value = 'Hata: ' + data.error;
+    } else if (data.result) {
+      resultArea.value = data.result;
+    } else {
+      resultArea.value = 'Bilinmeyen yanıt';
+    }
+  } catch (e) {
+    resultArea.value = 'Bağlantı hatası: ' + e.message;
   }
 }
 
 encryptBtn.addEventListener('click', ()=> send('encrypt'));
 decryptBtn.addEventListener('click', ()=> send('decrypt'));
+
+// --- If in decrypt mode, subscribe to server-sent events and auto-fill inputText ---
+if(mode === 'decrypt'){
+  const evtSource = new EventSource('http://127.0.0.1:5000/stream');
+  evtSource.onmessage = (e) => {
+    try {
+      const obj = JSON.parse(e.data);
+      const ct = obj.ciphertext || '';
+      // otomatik doldur ve sonucu temizle (kullanıcı isterse Çöz'e basar)
+      inputText.value = ct;
+      // optionally auto-trigger decrypt:
+      // send('decrypt');
+    } catch(err){
+      console.error('SSE parse error', err);
+    }
+  };
+  evtSource.onerror = (err) => {
+    console.error('SSE error', err);
+  };
+}

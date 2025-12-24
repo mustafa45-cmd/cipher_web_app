@@ -1,0 +1,110 @@
+<!doctype html>
+<html lang="tr">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Kriptoloji - Şifreleme Uygulaması</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <div class="container">
+    <h1>🔐 Kriptoloji - Şifreleme Uygulaması</h1>
+
+    <!-- Tab Navigation -->
+    <div class="tabs">
+      <button class="tab-btn active" data-tab="encrypt">🔒 Şifreleme</button>
+      <button class="tab-btn" data-tab="decrypt">🔓 Çözme</button>
+    </div>
+
+    <!-- Şifreleme Tab -->
+    <div id="encrypt-tab" class="tab-content active">
+      <div class="card">
+        <h2>Mesaj Şifreleme</h2>
+        <p class="tab-description">Mesajınızı şifreleyin ve Çözme sekmesine gönderin.</p>
+
+        <label for="encrypt-cipher">Şifreleme Türü</label>
+        <select id="encrypt-cipher">
+          <optgroup label="Klasik Şifreler">
+            <option value="caesar">Caesar</option>
+            <option value="affine">Affine</option>
+            <option value="vigenere">Vigenère</option>
+            <option value="substitution">Substitution</option>
+            <option value="railfence">Rail Fence</option>
+          </optgroup>
+          <optgroup label="Modern Şifreler">
+            <option value="aes_lib">AES (Kütüphaneli - PyCryptodome)</option>
+            <option value="aes_simple">AES (Kütüphanesiz - Basit)</option>
+            <option value="des_lib">DES (Kütüphaneli - PyCryptodome)</option>
+            <option value="des_simple">DES (Kütüphanesiz - Basit)</option>
+            <option value="rsa">RSA</option>
+          </optgroup>
+        </select>
+
+        <div id="encrypt-params"></div>
+
+        <label for="encrypt-inputText">Metin</label>
+        <textarea id="encrypt-inputText" rows="6" placeholder="Şifrelenecek metni buraya girin..."></textarea>
+
+        <div class="buttons">
+          <button id="encryptBtn" class="btn-primary">🔒 Şifrele ve Çözme Sekmesine Gönder</button>
+        </div>
+      </div>
+
+      <div class="card">
+        <h3>Şifrelenmiş Metin</h3>
+        <textarea id="encrypt-result" rows="5" readonly placeholder="Şifrelenmiş metin burada görünecek..."></textarea>
+        <div id="encrypt-status" class="result-status"></div>
+      </div>
+    </div>
+
+    <!-- Çözme Tab -->
+    <div id="decrypt-tab" class="tab-content">
+      <div class="card">
+        <h2>Mesaj Çözme</h2>
+        <p class="tab-description">Şifreleme sekmesinden gelen mesaj otomatik olarak buraya doldurulacaktır.</p>
+
+        <label for="decrypt-cipher">Şifreleme Türü</label>
+        <select id="decrypt-cipher">
+          <optgroup label="Klasik Şifreler">
+            <option value="caesar">Caesar</option>
+            <option value="affine">Affine</option>
+            <option value="vigenere">Vigenère</option>
+            <option value="substitution">Substitution</option>
+            <option value="railfence">Rail Fence</option>
+          </optgroup>
+          <optgroup label="Modern Şifreler">
+            <option value="aes_lib">AES (Kütüphaneli - PyCryptodome)</option>
+            <option value="aes_simple">AES (Kütüphanesiz - Basit)</option>
+            <option value="des_lib">DES (Kütüphaneli - PyCryptodome)</option>
+            <option value="des_simple">DES (Kütüphanesiz - Basit)</option>
+            <option value="rsa">RSA</option>
+          </optgroup>
+        </select>
+
+        <div id="decrypt-params"></div>
+
+        <label for="decrypt-inputText">Şifrelenmiş Metin</label>
+        <textarea id="decrypt-inputText" rows="6" placeholder="Çözülecek şifreli metin buraya gelecek veya manuel olarak girebilirsiniz..."></textarea>
+
+        <div class="buttons">
+          <button id="decryptBtn" class="btn-primary">🔓 Mesajı Çöz</button>
+          <button id="auto-decrypt-btn" class="btn-secondary">Otomatik Çöz</button>
+        </div>
+      </div>
+
+      <div class="card">
+        <h3>Çözülmüş Metin</h3>
+        <textarea id="decrypt-result" rows="5" readonly placeholder="Çözülmüş metin burada görünecek..."></textarea>
+        <div id="decrypt-status" class="result-status"></div>
+      </div>
+
+      <div class="card info-card">
+        <h3>ℹ️ Bilgi</h3>
+        <p>Şifreleme sekmesinden gönderilen mesajlar otomatik olarak bu sekmede görüntülenir. Şifreleme parametrelerini (shift, key vb.) doğru girdiğinizden emin olun.</p>
+      </div>
+    </div>
+  </div>
+
+  <script src="script.js"></script>
+</body>
+</html>

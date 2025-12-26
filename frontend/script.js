@@ -77,13 +77,30 @@ function renderEncryptParams() {
         genBtn.addEventListener('click', generateDSAPairForEncrypt);
       }
     }, 100);
+  } else if (c === 'ecc') {
+    encryptParamsDiv.innerHTML = `
+      <label>ECC Private Key (PEM formatında) - İmzalama için</label>
+      <textarea id="encrypt_p_private_key" rows="8" placeholder="-----BEGIN PRIVATE KEY-----&#10;...&#10;-----END PRIVATE KEY-----"></textarea>
+      <div style="margin-top: 10px;">
+        <button type="button" id="encrypt_generate_ecc_btn" class="btn-secondary" style="width: auto;">🔑 ECC Anahtar Çifti Oluştur</button>
+      </div>
+      <div id="encrypt_ecc_keys_display" style="margin-top: 10px; display: none;"></div>
+      <small style="color: var(--muted); font-size: 12px; display: block; margin-top: 8px;">ECC ile mesaj imzalanır (şifrelenmez)</small>
+    `;
+    // ECC key generation button event
+    setTimeout(() => {
+      const genBtn = document.getElementById('encrypt_generate_ecc_btn');
+      if (genBtn) {
+        genBtn.addEventListener('click', generateECCPairForEncrypt);
+      }
+    }, 100);
   }
 }
 
 encryptCipherSelect.addEventListener('change', () => {
   renderEncryptParams();
   // Buton metnini güncelle
-  if (encryptCipherSelect.value === 'dsa') {
+  if (encryptCipherSelect.value === 'dsa' || encryptCipherSelect.value === 'ecc') {
     encryptBtn.textContent = '✍️ İmzala ve Çözme Sekmesine Gönder';
   } else {
     encryptBtn.textContent = '🔒 Şifrele ve Çözme Sekmesine Gönder';
@@ -141,6 +158,31 @@ async function generateDSAPairForEncrypt() {
   }
 }
 
+// ECC Key Generation for Encrypt tab
+async function generateECCPairForEncrypt() {
+  try {
+    const res = await fetch('http://127.0.0.1:5001/generate-ecc-keys');
+    const data = await res.json();
+    if (data.status === 'ok') {
+      document.getElementById('encrypt_p_private_key').value = data.private_key;
+      const displayDiv = document.getElementById('encrypt_ecc_keys_display');
+      displayDiv.innerHTML = `
+        <div style="background: rgba(16, 185, 129, 0.1); padding: 12px; border-radius: 6px; margin-top: 10px;">
+          <strong style="color: var(--success);">✅ ECC Anahtar Çifti Oluşturuldu</strong><br/>
+          <small style="color: var(--muted);">Private Key yukarıya otomatik eklendi. Public Key'i çözme sekmesinde kullanacaksınız.</small>
+          <details style="margin-top: 8px;">
+            <summary style="cursor: pointer; color: var(--accent);">Public Key'i Göster (Çözme sekmesinde kullanılacak)</summary>
+            <textarea readonly rows="6" style="width: 100%; margin-top: 8px; font-family: monospace; font-size: 11px;">${data.public_key}</textarea>
+          </details>
+        </div>
+      `;
+      displayDiv.style.display = 'block';
+    }
+  } catch (e) {
+    alert('ECC anahtarları oluşturulamadı: ' + e.message);
+  }
+}
+
 // Şifreleme işlemi
 async function encryptAndSend() {
   const cipher = encryptCipherSelect.value;
@@ -171,10 +213,11 @@ async function encryptAndSend() {
       encryptStatus.className = 'result-status error';
       return;
     }
-  } else if (cipher === 'dsa') {
+  } else if (cipher === 'dsa' || cipher === 'ecc') {
     params.private_key = document.getElementById('encrypt_p_private_key').value || '';
     if (!params.private_key) {
-      encryptResultArea.value = 'Lütfen DSA Private Key girin veya yeni anahtar çifti oluşturun!';
+      const cipherName = cipher === 'dsa' ? 'DSA' : 'ECC';
+      encryptResultArea.value = `Lütfen ${cipherName} Private Key girin veya yeni anahtar çifti oluşturun!`;
       encryptStatus.textContent = 'Hata: Private Key boş';
       encryptStatus.className = 'result-status error';
       return;
@@ -219,7 +262,7 @@ async function encryptAndSend() {
       
       // AES ve DES için süre bilgisini göster
       let statusMessage;
-      if (cipher === 'dsa') {
+      if (cipher === 'dsa' || cipher === 'ecc') {
         statusMessage = '✅ Mesaj başarıyla imzalandı! İmzalı mesaj Çözme sekmesine gönderildi.';
       } else {
         statusMessage = '✅ Şifreleme başarılı! Mesaj Çözme sekmesine gönderildi.';
@@ -293,9 +336,10 @@ function renderDecryptParams() {
       <textarea id="decrypt_p_private_key" rows="8" placeholder="-----BEGIN RSA PRIVATE KEY-----&#10;...&#10;-----END RSA PRIVATE KEY-----"></textarea>
       <small style="color: var(--muted); font-size: 12px;">Şifreleme sırasında oluşturulan private key'i girin</small>
     `;
-  } else if (c === 'dsa') {
+  } else if (c === 'dsa' || c === 'ecc') {
+    const cipherName = c === 'dsa' ? 'DSA' : 'ECC';
     decryptParamsDiv.innerHTML = `
-      <label>DSA Public Key (PEM formatında) - Doğrulama için</label>
+      <label>${cipherName} Public Key (PEM formatında) - Doğrulama için</label>
       <textarea id="decrypt_p_public_key" rows="8" placeholder="-----BEGIN PUBLIC KEY-----&#10;...&#10;-----END PUBLIC KEY-----"></textarea>
       <small style="color: var(--muted); font-size: 12px;">İmzalama sırasında oluşturulan public key'i girin. İmzalı mesajı (JSON formatında) yukarıdaki metin alanına yapıştırın.</small>
     `;
@@ -375,10 +419,11 @@ async function decryptMessage() {
       decryptStatus.className = 'result-status error';
       return;
     }
-  } else if (cipher === 'dsa') {
+  } else if (cipher === 'dsa' || cipher === 'ecc') {
     params.public_key = document.getElementById('decrypt_p_public_key').value || '';
     if (!params.public_key) {
-      decryptResultArea.value = 'Lütfen DSA Public Key girin!';
+      const cipherName = cipher === 'dsa' ? 'DSA' : 'ECC';
+      decryptResultArea.value = `Lütfen ${cipherName} Public Key girin!`;
       decryptStatus.textContent = 'Hata: Public Key boş';
       decryptStatus.className = 'result-status error';
       return;
@@ -422,8 +467,8 @@ async function decryptMessage() {
       
       // AES ve DES için süre bilgisini göster
       let statusMessage;
-      if (cipher === 'dsa') {
-        statusMessage = data.result; // DSA verify sonucu zaten mesaj içeriyor
+      if (cipher === 'dsa' || cipher === 'ecc') {
+        statusMessage = data.result; // DSA/ECC verify sonucu zaten mesaj içeriyor
       } else {
         statusMessage = '✅ Mesaj başarıyla çözüldü!';
       }

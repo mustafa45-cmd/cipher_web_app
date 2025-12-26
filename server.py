@@ -117,7 +117,7 @@ def handle_client(conn, addr):
                 pt = substitution_decrypt(ct, params.get('key',''))
             elif cipher == 'railfence':
                 pt = railfence_decrypt(ct, int(params.get('rails',2)))
-            elif cipher in ['aes_lib', 'aes_simple', 'des_lib', 'des_simple', 'rsa', 'dsa']:
+            elif cipher in ['aes_lib', 'aes_simple', 'des_lib', 'des_simple', 'rsa', 'dsa', 'ecc']:
                 # Modern şifreler için çözme yapılmaz (loglama amaçlı)
                 pt = '<Modern şifre/İmza - çözme yapılmadı>'
             else:

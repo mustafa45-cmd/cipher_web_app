@@ -12,10 +12,10 @@ try:
     from Crypto.Cipher import AES as CryptoAES, DES as CryptoDES
     from Crypto.Util.Padding import pad, unpad
     from Crypto.Random import get_random_bytes
-    from Crypto.PublicKey import RSA, DSA
+    from Crypto.PublicKey import RSA, DSA, ECC
     from Crypto.Cipher import PKCS1_OAEP
     from Crypto.Hash import SHA256
-    from Crypto.Signature import DSS, pkcs1_15
+    from Crypto.Signature import DSS, pkcs1_15, eddsa, eddsa
     CRYPTO_AVAILABLE = True
 except ImportError:
     CRYPTO_AVAILABLE = False
@@ -368,6 +368,69 @@ def dsa_verify(signed_data_json, public_key_pem):
     except Exception as e:
         raise ValueError(f'Doğrulama hatası: {str(e)}')
 
+# ==================== ECC (ELLIPTIC CURVE CRYPTOGRAPHY) ====================
+
+# ECC Key Generation (P-256 curve)
+def generate_ecc_keys():
+    if not CRYPTO_AVAILABLE:
+        raise ValueError('pycryptodome kütüphanesi yüklü değil. pip install pycryptodome')
+    try:
+        key = ECC.generate(curve='P-256')
+        private_key = key.export_key(format='PEM')
+        public_key = key.public_key().export_key(format='PEM')
+        return private_key, public_key
+    except Exception as e:
+        raise ValueError(f'ECC anahtarı oluşturma hatası: {str(e)}')
+
+# ECC - Sign (İmzalama)
+def ecc_sign(message, private_key_pem):
+    if not CRYPTO_AVAILABLE:
+        raise ValueError('pycryptodome kütüphanesi yüklü değil. pip install pycryptodome')
+    try:
+        # Private key'i yükle
+        private_key = ECC.import_key(private_key_pem)
+        # Mesajın hash'ini al
+        hash_obj = SHA256.new(message.encode('utf-8'))
+        # İmzala (ECDSA kullanarak)
+        signer = DSS.new(private_key, 'fips-186-3')
+        signature = signer.sign(hash_obj)
+        # Base64 ile encode et
+        signature_b64 = base64.b64encode(signature).decode('utf-8')
+        # Mesaj ve imzayı birlikte döndür (JSON formatında)
+        return json.dumps({
+            'message': message,
+            'signature': signature_b64
+        })
+    except Exception as e:
+        raise ValueError(f'İmzalama hatası: {str(e)}')
+
+# ECC - Verify (Doğrulama)
+def ecc_verify(signed_data_json, public_key_pem):
+    if not CRYPTO_AVAILABLE:
+        raise ValueError('pycryptodome kütüphanesi yüklü değil. pip install pycryptodome')
+    try:
+        # JSON'dan mesaj ve imzayı al
+        data = json.loads(signed_data_json)
+        message = data.get('message', '')
+        signature_b64 = data.get('signature', '')
+        
+        if not message or not signature_b64:
+            raise ValueError('Geçersiz imza formatı')
+        
+        # Public key'i yükle
+        public_key = ECC.import_key(public_key_pem)
+        # Mesajın hash'ini al
+        hash_obj = SHA256.new(message.encode('utf-8'))
+        # İmzayı decode et
+        signature = base64.b64decode(signature_b64)
+        # Doğrula
+        verifier = DSS.new(public_key, 'fips-186-3')
+        verifier.verify(hash_obj, signature)
+        # Doğrulama başarılı
+        return f'✅ İmza doğrulandı! Mesaj: {message}'
+    except Exception as e:
+        raise ValueError(f'Doğrulama hatası: {str(e)}')
+
 # --- TCP forward ---
 TCP_HOST = '127.0.0.1'
 TCP_PORT = 65432
@@ -456,6 +519,19 @@ def generate_dsa_keys_endpoint():
         })
     except Exception as e:
         return jsonify({'status': 'error', 'error': str(e)}), 400
+
+@app.route('/generate-ecc-keys', methods=['GET'])
+def generate_ecc_keys_endpoint():
+    """Generate ECC key pair"""
+    try:
+        private_key, public_key = generate_ecc_keys()
+        return jsonify({
+            'status': 'ok',
+            'private_key': private_key,
+            'public_key': public_key
+        })
+    except Exception as e:
+        return jsonify({'status': 'error', 'error': str(e)}), 400
 @app.route('/process', methods=['POST'])
 def process():
     data = request.json or {}
@@ -492,13 +568,16 @@ def process():
             elif cipher == 'dsa':
                 # DSA için sign işlemi
                 result = dsa_sign(text, params.get('private_key',''))
+            elif cipher == 'ecc':
+                # ECC için sign işlemi
+                result = ecc_sign(text, params.get('private_key',''))
             else:
                 return jsonify({'error':'unknown cipher'}), 400
             
             end_time = time.perf_counter()
             execution_time = end_time - start_time  # Saniye cinsinden
 
-            # forward to TCP server for logging (RSA/DSA key'leri göndermeyelim)
+            # forward to TCP server for logging (RSA/DSA/ECC key'leri göndermeyelim)
             log_params = params.copy()
             if 'public_key' in log_params:
                 log_params['public_key'] = '[Public Key - Hidden]'
@@ -543,6 +622,9 @@ def process():
             elif cipher == 'dsa':
                 # DSA için verify işlemi
                 result = dsa_verify(text, params.get('public_key',''))
+            elif cipher == 'ecc':
+                # ECC için verify işlemi
+                result = ecc_verify(text, params.get('public_key',''))
             else:
                 return jsonify({'error':'unknown cipher'}), 400
             

@@ -307,7 +307,6 @@ const decryptParamsDiv = document.getElementById('decrypt-params');
 const decryptInputText = document.getElementById('decrypt-inputText');
 const decryptResultArea = document.getElementById('decrypt-result');
 const decryptBtn = document.getElementById('decryptBtn');
-const autoDecryptBtn = document.getElementById('auto-decrypt-btn');
 const decryptStatus = document.getElementById('decrypt-status');
 
 // Çözme parametrelerini render et
@@ -496,14 +495,6 @@ async function decryptMessage() {
 }
 
 decryptBtn.addEventListener('click', decryptMessage);
-autoDecryptBtn.addEventListener('click', () => {
-  if (decryptInputText.value.trim()) {
-    decryptMessage();
-  } else {
-    decryptStatus.textContent = 'Çözülecek metin yok!';
-    decryptStatus.className = 'result-status error';
-  }
-});
 
 // ==================== Server-Sent Events (SSE) - Otomatik Mesaj Aktarımı ====================
 

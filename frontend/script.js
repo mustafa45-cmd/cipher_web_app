@@ -60,10 +60,35 @@ function renderEncryptParams() {
         genBtn.addEventListener('click', generateRSAPairForEncrypt);
       }
     }, 100);
+  } else if (c === 'dsa') {
+    encryptParamsDiv.innerHTML = `
+      <label>DSA Private Key (PEM formatında) - İmzalama için</label>
+      <textarea id="encrypt_p_private_key" rows="8" placeholder="-----BEGIN DSA PRIVATE KEY-----&#10;...&#10;-----END DSA PRIVATE KEY-----"></textarea>
+      <div style="margin-top: 10px;">
+        <button type="button" id="encrypt_generate_dsa_btn" class="btn-secondary" style="width: auto;">🔑 DSA Anahtar Çifti Oluştur</button>
+      </div>
+      <div id="encrypt_dsa_keys_display" style="margin-top: 10px; display: none;"></div>
+      <small style="color: var(--muted); font-size: 12px; display: block; margin-top: 8px;">DSA ile mesaj imzalanır (şifrelenmez)</small>
+    `;
+    // DSA key generation button event
+    setTimeout(() => {
+      const genBtn = document.getElementById('encrypt_generate_dsa_btn');
+      if (genBtn) {
+        genBtn.addEventListener('click', generateDSAPairForEncrypt);
+      }
+    }, 100);
   }
 }
 
-encryptCipherSelect.addEventListener('change', renderEncryptParams);
+encryptCipherSelect.addEventListener('change', () => {
+  renderEncryptParams();
+  // Buton metnini güncelle
+  if (encryptCipherSelect.value === 'dsa') {
+    encryptBtn.textContent = '✍️ İmzala ve Çözme Sekmesine Gönder';
+  } else {
+    encryptBtn.textContent = '🔒 Şifrele ve Çözme Sekmesine Gönder';
+  }
+});
 renderEncryptParams();
 
 // RSA Key Generation for Encrypt tab
@@ -88,6 +113,31 @@ async function generateRSAPairForEncrypt() {
     }
   } catch (e) {
     alert('RSA anahtarları oluşturulamadı: ' + e.message);
+  }
+}
+
+// DSA Key Generation for Encrypt tab
+async function generateDSAPairForEncrypt() {
+  try {
+    const res = await fetch('http://127.0.0.1:5001/generate-dsa-keys');
+    const data = await res.json();
+    if (data.status === 'ok') {
+      document.getElementById('encrypt_p_private_key').value = data.private_key;
+      const displayDiv = document.getElementById('encrypt_dsa_keys_display');
+      displayDiv.innerHTML = `
+        <div style="background: rgba(16, 185, 129, 0.1); padding: 12px; border-radius: 6px; margin-top: 10px;">
+          <strong style="color: var(--success);">✅ DSA Anahtar Çifti Oluşturuldu</strong><br/>
+          <small style="color: var(--muted);">Private Key yukarıya otomatik eklendi. Public Key'i çözme sekmesinde kullanacaksınız.</small>
+          <details style="margin-top: 8px;">
+            <summary style="cursor: pointer; color: var(--accent);">Public Key'i Göster (Çözme sekmesinde kullanılacak)</summary>
+            <textarea readonly rows="6" style="width: 100%; margin-top: 8px; font-family: monospace; font-size: 11px;">${data.public_key}</textarea>
+          </details>
+        </div>
+      `;
+      displayDiv.style.display = 'block';
+    }
+  } catch (e) {
+    alert('DSA anahtarları oluşturulamadı: ' + e.message);
   }
 }
 
@@ -118,6 +168,14 @@ async function encryptAndSend() {
     if (!params.public_key) {
       encryptResultArea.value = 'Lütfen RSA Public Key girin veya yeni anahtar çifti oluşturun!';
       encryptStatus.textContent = 'Hata: Public Key boş';
+      encryptStatus.className = 'result-status error';
+      return;
+    }
+  } else if (cipher === 'dsa') {
+    params.private_key = document.getElementById('encrypt_p_private_key').value || '';
+    if (!params.private_key) {
+      encryptResultArea.value = 'Lütfen DSA Private Key girin veya yeni anahtar çifti oluşturun!';
+      encryptStatus.textContent = 'Hata: Private Key boş';
       encryptStatus.className = 'result-status error';
       return;
     }
@@ -160,7 +218,12 @@ async function encryptAndSend() {
       encryptResultArea.value = data.result;
       
       // AES ve DES için süre bilgisini göster
-      let statusMessage = '✅ Şifreleme başarılı! Mesaj Çözme sekmesine gönderildi.';
+      let statusMessage;
+      if (cipher === 'dsa') {
+        statusMessage = '✅ Mesaj başarıyla imzalandı! İmzalı mesaj Çözme sekmesine gönderildi.';
+      } else {
+        statusMessage = '✅ Şifreleme başarılı! Mesaj Çözme sekmesine gönderildi.';
+      }
       if (data.execution_time !== undefined && (cipher === 'aes_lib' || cipher === 'aes_simple' || cipher === 'des_lib' || cipher === 'des_simple')) {
         const timeMs = data.execution_time_ms.toFixed(3);
         const timeSec = data.execution_time.toFixed(6);
@@ -229,6 +292,12 @@ function renderDecryptParams() {
       <label>RSA Private Key (PEM formatında)</label>
       <textarea id="decrypt_p_private_key" rows="8" placeholder="-----BEGIN RSA PRIVATE KEY-----&#10;...&#10;-----END RSA PRIVATE KEY-----"></textarea>
       <small style="color: var(--muted); font-size: 12px;">Şifreleme sırasında oluşturulan private key'i girin</small>
+    `;
+  } else if (c === 'dsa') {
+    decryptParamsDiv.innerHTML = `
+      <label>DSA Public Key (PEM formatında) - Doğrulama için</label>
+      <textarea id="decrypt_p_public_key" rows="8" placeholder="-----BEGIN PUBLIC KEY-----&#10;...&#10;-----END PUBLIC KEY-----"></textarea>
+      <small style="color: var(--muted); font-size: 12px;">İmzalama sırasında oluşturulan public key'i girin. İmzalı mesajı (JSON formatında) yukarıdaki metin alanına yapıştırın.</small>
     `;
   }
 }
@@ -306,6 +375,14 @@ async function decryptMessage() {
       decryptStatus.className = 'result-status error';
       return;
     }
+  } else if (cipher === 'dsa') {
+    params.public_key = document.getElementById('decrypt_p_public_key').value || '';
+    if (!params.public_key) {
+      decryptResultArea.value = 'Lütfen DSA Public Key girin!';
+      decryptStatus.textContent = 'Hata: Public Key boş';
+      decryptStatus.className = 'result-status error';
+      return;
+    }
   }
 
   const text = decryptInputText.value.trim();
@@ -344,7 +421,12 @@ async function decryptMessage() {
       decryptResultArea.value = data.result;
       
       // AES ve DES için süre bilgisini göster
-      let statusMessage = '✅ Mesaj başarıyla çözüldü!';
+      let statusMessage;
+      if (cipher === 'dsa') {
+        statusMessage = data.result; // DSA verify sonucu zaten mesaj içeriyor
+      } else {
+        statusMessage = '✅ Mesaj başarıyla çözüldü!';
+      }
       if (data.execution_time !== undefined && (cipher === 'aes_lib' || cipher === 'aes_simple' || cipher === 'des_lib' || cipher === 'des_simple')) {
         const timeMs = data.execution_time_ms.toFixed(3);
         const timeSec = data.execution_time.toFixed(6);

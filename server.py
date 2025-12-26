@@ -3,18 +3,6 @@ import json
 import threading
 import string
 from math import gcd
-import base64
-import hashlib
-
-# Try to import pycryptodome for library-based decryption
-try:
-    from Crypto.Cipher import AES as CryptoAES, DES as CryptoDES
-    from Crypto.Util.Padding import unpad
-    from Crypto.PublicKey import RSA
-    from Crypto.Cipher import PKCS1_OAEP
-    CRYPTO_AVAILABLE = True
-except ImportError:
-    CRYPTO_AVAILABLE = False
 
 ALPHABET = string.ascii_uppercase
 

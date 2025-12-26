@@ -378,7 +378,6 @@ def generate_rsa_keys_endpoint():
         })
     except Exception as e:
         return jsonify({'status': 'error', 'error': str(e)}), 400
-
 @app.route('/process', methods=['POST'])
 def process():
     data = request.json or {}
@@ -392,7 +391,6 @@ def process():
         
         if action == 'encrypt':
             start_time = time.perf_counter()  # Yüksek çözünürlüklü zaman ölçümü
-            
             if cipher == 'caesar':
                 result = caesar_encrypt(text, int(params.get('shift',0)))
             elif cipher == 'affine':
@@ -441,7 +439,6 @@ def process():
 
         elif action == 'decrypt':
             start_time = time.perf_counter()  # Çözme için de zaman ölçümü
-            
             if cipher == 'caesar':
                 result = caesar_decrypt(text, int(params.get('shift',0)))
             elif cipher == 'affine':

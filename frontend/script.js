@@ -138,13 +138,19 @@ async function encryptAndSend() {
     encryptStatus.textContent = 'Şifreleniyor ve gönderiliyor...';
     encryptStatus.className = 'result-status processing';
     
+    console.log('Şifreleme isteği gönderiliyor:', payload);
     const res = await fetch('http://127.0.0.1:5001/process', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(payload)
     });
 
+    if (!res.ok) {
+      throw new Error(`HTTP ${res.status}: ${res.statusText}`);
+    }
+
     const data = await res.json();
+    console.log('Sunucudan yanıt:', data);
 
     if (data.error) {
       encryptResultArea.value = 'Hata: ' + data.error;
@@ -179,8 +185,9 @@ async function encryptAndSend() {
       encryptStatus.className = 'result-status error';
     }
   } catch (e) {
+    console.error('Şifreleme hatası:', e);
     encryptResultArea.value = 'Bağlantı hatası: ' + e.message;
-    encryptStatus.textContent = `Bağlantı hatası: ${e.message}`;
+    encryptStatus.textContent = `Bağlantı hatası: ${e.message}. Flask API çalışıyor mu? http://127.0.0.1:5001 adresini kontrol edin.`;
     encryptStatus.className = 'result-status error';
   }
 }
@@ -322,7 +329,12 @@ async function decryptMessage() {
       body: JSON.stringify(payload)
     });
 
+    if (!res.ok) {
+      throw new Error(`HTTP ${res.status}: ${res.statusText}`);
+    }
+
     const data = await res.json();
+    console.log('Çözme yanıtı:', data);
 
     if (data.error) {
       decryptResultArea.value = 'Hata: ' + data.error;
@@ -349,8 +361,9 @@ async function decryptMessage() {
       decryptStatus.className = 'result-status error';
     }
   } catch (e) {
+    console.error('Çözme hatası:', e);
     decryptResultArea.value = 'Bağlantı hatası: ' + e.message;
-    decryptStatus.textContent = `Bağlantı hatası: ${e.message}`;
+    decryptStatus.textContent = `Bağlantı hatası: ${e.message}. Flask API çalışıyor mu?`;
     decryptStatus.className = 'result-status error';
   }
 }

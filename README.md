@@ -59,7 +59,7 @@ python client_api.py
 
 Tarayıcınızda şu adresi açın:
 ```
-http://127.0.0.1:5000
+http://127.0.0.1:5001
 ```
 
 ## 📖 Kullanım
@@ -88,7 +88,7 @@ http://127.0.0.1:5000
 ```
 cipher_web_app/
 ├── server.py          # TCP Server (Port: 65432)
-├── client_api.py      # Flask API Server (Port: 5000)
+├── client_api.py      # Flask API Server (Port: 5001)
 ├── frontend/
 │   ├── index.html     # Ana HTML dosyası
 │   ├── script.js      # JavaScript kodları
@@ -101,8 +101,8 @@ cipher_web_app/
 ## 🔧 Portlar
 
 - **TCP Server**: 127.0.0.1:65432
-- **Flask API**: 127.0.0.1:5000
-- **Frontend**: Flask API üzerinden sunulur (http://127.0.0.1:5000)
+- **Flask API**: 127.0.0.1:5001
+- **Frontend**: Flask API üzerinden sunulur (http://127.0.0.1:5001)
 
 ## ⚠️ Sorun Giderme
 
@@ -125,7 +125,7 @@ Get-Process python
 ### Flask API çalışmıyor
 
 - Flask ve flask-cors modüllerinin yüklü olduğundan emin olun
-- Port 5000'in kullanılabilir olduğunu kontrol edin
+- Port 5001'in kullanılabilir olduğunu kontrol edin
 
 ## 📝 Notlar
 

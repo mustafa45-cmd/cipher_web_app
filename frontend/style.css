@@ -1,15 +1,26 @@
+/* ============================================================================
+   style.css
+   CSS Stil Dosyası - Modern Karanlık Tema
+   ============================================================================
+   Bu dosya, uygulamanın görsel stilini tanımlar:
+   - CSS değişkenleri (renkler, boyutlar)
+   - Karanlık tema tasarımı
+   - Responsive (mobil uyumlu) düzen
+   ============================================================================ */
+
+/* CSS Değişkenleri - Renkler ve Temalar */
 :root {
-  --bg: #0f172a;
-  --card: #0b1220;
-  --accent: #7c3aed;
-  --accent-hover: #8b5cf6;
-  --muted: #94a3b8;
-  --text: #e6eef8;
-  --success: #10b981;
-  --error: #ef4444;
-  --warning: #f59e0b;
-  --border: rgba(255, 255, 255, 0.06);
-  --border-hover: rgba(255, 255, 255, 0.1);
+  --bg: #0f172a;  /* Ana arka plan rengi (koyu mavi) */
+  --card: #0b1220;  /* Kart arka plan rengi */
+  --accent: #7c3aed;  /* Vurgu rengi (mor) */
+  --accent-hover: #8b5cf6;  /* Hover durumu vurgu rengi */
+  --muted: #94a3b8;  /* Soluk metin rengi */
+  --text: #e6eef8;  /* Ana metin rengi (açık gri) */
+  --success: #10b981;  /* Başarı mesajları için yeşil */
+  --error: #ef4444;  /* Hata mesajları için kırmızı */
+  --warning: #f59e0b;  /* Uyarı mesajları için turuncu */
+  --border: rgba(255, 255, 255, 0.06);  /* Kenarlık rengi (şeffaf beyaz) */
+  --border-hover: rgba(255, 255, 255, 0.1);  /* Hover durumu kenarlık */
 }
 
 * {

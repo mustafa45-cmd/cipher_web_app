@@ -1,6 +1,19 @@
-// Tab Management
-const tabBtns = document.querySelectorAll('.tab-btn');
-const tabContents = document.querySelectorAll('.tab-content');
+// ============================================================================
+// script.js
+// Frontend JavaScript - Kullanıcı Arayüzü ve API İletişimi
+// ============================================================================
+// Bu dosya, web arayüzünün işlevselliğini sağlar:
+// - Tab yönetimi (Şifreleme/Çözme sekmeleri)
+// - Dinamik parametre formları
+// - Flask API ile iletişim
+// - Server-Sent Events (SSE) ile gerçek zamanlı mesaj aktarımı
+// ============================================================================
+
+// ==================== TAB YÖNETİMİ ====================
+// Sekme butonları ve içeriklerini yönet
+
+const tabBtns = document.querySelectorAll('.tab-btn');  // Tüm sekme butonları
+const tabContents = document.querySelectorAll('.tab-content');  // Tüm sekme içerikleri
 
 tabBtns.forEach(btn => {
   btn.addEventListener('click', () => {
@@ -25,9 +38,13 @@ const encryptResultArea = document.getElementById('encrypt-result');
 const encryptBtn = document.getElementById('encryptBtn');
 const encryptStatus = document.getElementById('encrypt-status');
 
+/**
+ * Şifreleme sekmesi için parametre formlarını oluştur
+ * Seçilen şifreleme türüne göre dinamik olarak input alanları oluşturur
+ */
 function renderEncryptParams() {
-  const c = encryptCipherSelect.value;
-  encryptParamsDiv.innerHTML = '';
+  const c = encryptCipherSelect.value;  // Seçilen şifreleme türü
+  encryptParamsDiv.innerHTML = '';  // Önceki içeriği temizle
   if (c === 'caesar') {
     encryptParamsDiv.innerHTML = `<label>Shift Değeri</label><input id="encrypt_p_shift" type="number" value="3" />`;
   } else if (c === 'affine') {
